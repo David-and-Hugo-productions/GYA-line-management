@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barometer och Graf</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.0.1/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="content" style="display: flex; gap: 20px;">
+    <div class="barometer-container">
+      <div class="barometer" id="barometer"></div>
+    </div>
+    <canvas id="barometerGraph" width="400" height="300"></canvas>
+    <canvas id="averageGraph" width="400" height="300"></canvas>
+  </div>
+  <input
+    type="number"
+    id="inputValue"
+    min="1"
+    max="9"
+    placeholder="Sätt värde (1-9)"
+    oninput="manualUpdateBarometer()">
+
+      <!-- Knapp för att gå till inloggningssidan -->
+      <button id="loginButton" onclick="window.location.href='Login.html';">Logga in</button>
+  
+  <script>
+    let manualValue = null; // För att hålla manuellt inskrivet värde
+    let recentValues = []; // För att lagra värden under de senaste 3 sekunderna
+    let allValues = []; // För att lagra alla värden för totalmedelvärdet
+
+    // Antalet punkter för att täcka 360 sekunder (360 / 3 = 120 punkter)
+    const TOTAL_POINTS = 120;
+
+    // Initialisera graf med Chart.js
+    const ctx = document.getElementById('barometerGraph').getContext('2d');
+    const barometerGraph = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: Array.from({ length: TOTAL_POINTS }, (_, i) => (i * 3).toString()), // 120 punkter = 360 sekunder
+        datasets: [{
+          label: 'Medelvärde (senaste 3 sekunder)',
+          data: Array(TOTAL_POINTS).fill(null), // Börjar tom
+          borderColor: 'rgb(75, 192, 192)',
+          borderWidth: 2,
+          fill: false
+        }]
+      },
+      options: {
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Tid (sekunder)'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Värde (1-9)'
+            },
+            min: 1,
+            max: 9,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
+      }
+    });
+
+    // Ny graf för totalmedelvärde
+    const ctx2 = document.getElementById('averageGraph').getContext('2d');
+    const averageGraph = new Chart(ctx2, {
+      type: 'line',
+      data: {
+        labels: Array.from({ length: TOTAL_POINTS }, (_, i) => (i * 3).toString()),
+        datasets: [{
+          label: 'Totalmedelvärde',
+          data: Array(TOTAL_POINTS).fill(null),
+          borderColor: 'rgb(192, 75, 75)',
+          borderWidth: 2,
+          fill: false
+        }]
+      },
+      options: {
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Tid (sekunder)'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Värde (1-9)'
+            },
+            min: 1,
+            max: 9,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
+      }
+    });
+
+    function updateBarometer(value) {
+      const barometer = document.getElementById('barometer');
+
+      const barometerValue = manualValue !== null ? manualValue : value;
+      const height = (barometerValue / 9) * 100;
+
+      let red, green;
+
+      if (barometerValue <= 5) {
+        red = Math.round(((barometerValue - 1) / 4) * 255);
+        green = 255;
+      } else {
+        red = 255;
+        green = Math.round(255 - ((barometerValue - 5) / 4) * 255);
+      }
+
+      const color = `rgb(${red}, ${green}, 0)`;
+
+      barometer.style.height = `${height}%`;
+      barometer.style.backgroundColor = color;
+
+      if (manualValue !== null) {
+        recentValues = [barometerValue];
+      } else {
+        recentValues.push(barometerValue);
+        if (recentValues.length > 3) {
+          recentValues.shift();
+        }
+      }
+
+      // Lägger till värdet i totalvärdeslistan
+      allValues.push(barometerValue);
+    }
+
+    function updateGraphs() {
+      // Uppdatera graf för senaste medelvärden
+      const average =
+        recentValues.reduce((sum, value) => sum + value, 0) / recentValues.length;
+
+      const dataset = barometerGraph.data.datasets[0];
+      dataset.data.push(average);
+      dataset.data.shift();
+      barometerGraph.update();
+
+      // Uppdatera graf för totalmedelvärde
+      const totalAverage =
+        allValues.reduce((sum, value) => sum + value, 0) / allValues.length;
+
+      const totalDataset = averageGraph.data.datasets[0];
+      totalDataset.data.push(totalAverage);
+      totalDataset.data.shift();
+      averageGraph.update();
+    }
+
+    function manualUpdateBarometer() {
+      const inputValue = parseInt(document.getElementById('inputValue').value, 10);
+      if (inputValue >= 1 && inputValue <= 9) {
+        manualValue = inputValue;
+        updateBarometer(inputValue);
+        updateGraphs();
+      }
+    }
+
+    setInterval(() => {
+      if (manualValue === null) {
+        const randomValue = Math.floor(Math.random() * 9) + 1;
+        updateBarometer(randomValue);
+      }
+    }, 1000);
+
+    setInterval(updateGraphs, 3000);
+    updateBarometer(1);
+  </script>
+</body>
+</html>
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Utvecklarsida</title>
+  <link rel="stylesheet" href="developers.css">
+</head>
+<body>
+  <header>
+    <h1>Utvecklarsida</h1>
+    <p>Välkommen till utvecklarsidan!</p>
+  </header>
+  <main>
+    <p>Här kan du se och hantera utvecklarfunktioner.</p>
+  </main>
+</body>
+</html> -->

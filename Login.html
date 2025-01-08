@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logga in</title>
+  <link rel="stylesheet" href="login.css">
+  <script defer src="login.js"></script>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Logga in</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Användarnamn" required>
+      <input type="password" id="password" placeholder="Lösenord" required>
+      <button type="submit">Logga in</button>
+    </form>
+    <p id="error-message" class="hidden">Fel användarnamn eller lösenord.</p>
+  </div>
+</body>
+</html>
