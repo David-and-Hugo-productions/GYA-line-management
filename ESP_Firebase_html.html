@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Ultraljudssensorer</title>
+ <style>
+   body {
+     font-family: Arial, sans-serif;
+     margin: 0;
+     padding: 0;
+     background-color: #f4f4f9;
+     color: #333;
+   }
+   header {
+     background: #3b5998;
+     color: white;
+     text-align: center;
+     padding: 1rem 0;
+   }
+   .container {
+     max-width: 800px;
+     margin: 20px auto;
+     background: white;
+     padding: 20px;
+     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+     border-radius: 8px;
+   }
+   .esp {
+     margin-bottom: 20px;
+   }
+   .esp h2 {
+     font-size: 1.5rem;
+     color: #3b5998;
+   }
+   .sensor-status {
+     display: grid;
+     grid-template-columns: repeat(4, 1fr);
+     gap: 10px;
+     margin-top: 10px;
+   }
+   .sensor {
+     padding: 10px;
+     border: 1px solid #ccc;
+     border-radius: 5px;
+     text-align: center;
+     background-color: #e0f7fa;
+   }
+   .sensor.active {
+     background-color: #ef9a9a; /* Grön för närmare än 80 cm */
+   }
+   .sensor.inactive {
+     background-color: #81c784; /* Röd för längre än 80 cm */
+   }
+ </style>
+</head>
+<body>
+ <header>
+   <h1>Ultraljudssensorer</h1>
+   <p>Data från två ESP8266-enheter</p>
+ </header>
+ <div class="container">
+   <div class="esp" id="esp1">
+     <h2>ESP #1</h2>
+     <div class="sensor-status">
+       <div class="sensor" id="esp1-sensor1">Sensor 1</div>
+       <div class="sensor" id="esp1-sensor2">Sensor 2</div>
+       <div class="sensor" id="esp1-sensor3">Sensor 3</div>
+       <div class="sensor" id="esp1-sensor4">Sensor 4</div>
+     </div>
+   </div>
+ </div>
+
+ <script type="module">
+   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+   import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+
+   // Firebase-konfiguration
+   const firebaseConfig = {
+     apiKey: "AIzaSyCJ7XWRPOlAS8VilabsXjmf_cZWPCobiyw",
+     authDomain: "ultraljudsprojekt.firebaseapp.com",
+     databaseURL: "https://ultraljudsprojekt-default-rtdb.europe-west1.firebasedatabase.app",
+     projectId: "ultraljudsprojekt",
+     storageBucket: "ultraljudsprojekt.firebasestorage.app",
+     messagingSenderId: "1029637979428",
+     appId: "1:1029637979428:web:655f4c2c1e1cc41a85c7b1",
+     measurementId: "G-GGK57MHYTV"
+   };
+
+   // Initiera Firebase
+   const app = initializeApp(firebaseConfig);
+   const database = getDatabase(app);
+
+   // Referens till Firebase-datan
+   const esp1Ref = ref(database, 'esp');
+
+   // Lyssna på ändringar i data
+   onValue(esp1Ref, (snapshot) => {
+     const data = snapshot.val();
+
+     if (data) {
+       const keys = Object.keys(data);
+       const latestKey = keys[keys.length - 1]; // Senaste posten
+       const latestData = data[latestKey];
+
+       console.log("Latest data:", latestData);
+
+       const espId = latestData[0]; // Första siffran är ESP-ID
+       const sensorValues = latestData.slice(1); // Resten är sensorstatusar
+
+       // Uppdatera sensorerna
+       for (let i = 0; i < sensorValues.length; i++) {
+         const sensorElement = document.getElementById(`esp1-sensor${i + 1}`);
+         if (sensorElement) {
+           const status = sensorValues[i] === '1' ? 'active' : 'inactive';
+           sensorElement.className = `sensor ${status}`;
+         }
+       }
+     } else {
+       console.error("Ingen data hittades.");
+     }
+   });
+ </script>
+</body>
+</html>
+
