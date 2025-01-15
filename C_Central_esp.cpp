@@ -11,10 +11,34 @@ FirebaseData firebaseData;
 FirebaseConfig firebaseConfig;
 FirebaseAuth firebaseAuth;
 
+
+void extractData(string data){
+
+  // Extrahera ESP_ID (första siffran i den mottagna datasträngen)
+  int ESP_ID = data.charAt(0) - '0'; // Första siffran är ESP_ID
+
+  // Kontrollera att ESP_ID är giltigt (t.ex. inom ett förväntat intervall)
+  if (ESP_ID < 0 || ESP_ID >= numSensors) {
+    Serial.println("Ogiltigt ESP_ID: " + String(ESP_ID));
+    return;
+  }
+
+  // Lagra sensorvärden i bufferten för motsvarande ESP_ID
+  for (int i = 4 * ESP_ID; i < numSensors / 2; i++) {     /* 1 * ESP_ID, esp 0 startar med i=0 esp 1 startar med i=4  ÄNDRA OM ANTAL SENSORER INTE ÄR 8*/    
+    sensorData[messageCount % maxMessages][i] = data.charAt(i + 1) - '0'; // Läser sensorvärden från index 1
+  }
+  messageCount++;
+
+  Serial.println("Data från ESP " + String(ESP_ID) + " lagrad.");
+
+}
+
+
+
 WiFiUDP udp;
 const int localPort = 12345; // Port för att lyssna på inkommande data
 
-const int numSensors = 4; // Antal sensorer
+const int numSensors = 8; // Antal sensorer
 const int maxMessages = 6; // Antal meddelanden att lagra för medelvärdesberäkning
 int sensorData[maxMessages][numSensors] = {0}; // Buffert för sensorvärden
 int messageCount = 0;
@@ -63,15 +87,7 @@ void loop() {
 
    Serial.println("Data mottagen: " + data);
    
-
-   // Extrahera ESP_ID (första siffran i den mottagna datasträngen)
-   int ESP_ID = data.charAt(0) - '0'; // Första siffran är ESP_ID
-
-   // Lagra sensorvärden i bufferten
-   for (int i = 0; i < numSensors; i++) {
-     sensorData[messageCount % maxMessages][i] = data.charAt(i + 1) - '0'; // Läser sensorvärden från index 1
-   }
-   messageCount++;
+  extractData(data);
 
    // Uppdatera Firebase var tredje sekund
    if (millis() - lastFirebaseUpdate >= 3000) {
