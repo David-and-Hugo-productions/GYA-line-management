@@ -84,7 +84,7 @@ void extractData(String data){
       }
 
 void updateDataDay(){
-    int timestamp = floor(timeClient.getHours() * 60 + timeClient.getMinutes() / 3); //!ÄNDRA 5MIN TILL ANPASSAT
+    int timestamp = floor((timeClient.getHours() - 11) * 60 + timeClient.getMinutes() / 4); //!ÄNDRA 5MIN TILL ANPASSAT
     int value = 0;
 
   // Bygg upp en sträng med alla sensorvärden från båda ESP-enheterna
@@ -101,11 +101,11 @@ void updateDataDay(){
 
 void updateFirebase() {
   String firebaseDataString = "";
-  int timestamp = floor(timeClient.getHours() * 60 + timeClient.getMinutes() / 5); //!ÄNDRA 5MIN TILL ANPASSAT
+  int timestamp = floor((timeClient.getHours() - 11) * 60 + timeClient.getMinutes() / 4); //!ÄNDRA 5MIN TILL ANPASSAT
 
   if (timeClient.getHours()>14){
   // Bygg upp en sträng med alla sensorvärden från båda ESP-enheterna
-  firebaseDataString += floor((timeClient.getHours()-10) * 60 + timeClient.getMinutes() / 5);
+  firebaseDataString += floor((timeClient.getHours()-11) * 60 + timeClient.getMinutes() / 4);
 
     for (int cordinate = 0; cordinate < 39; cordinate++) {
     firebaseDataString += sensorDataDay[timeClient.getDay()][cordinate];
@@ -113,7 +113,12 @@ void updateFirebase() {
   
   }
   else{
-    firebaseDataString = sensorDataDay[timeClient.getDay()][/*!!LAST UPPLOAD!!*/]    //MAY NEED TO FIX (ie t.ex timestamp-1)
+    if (timestamp >= 0 && timestamp <=39){
+    firebaseDataString = sensorDataDay[timeClient.getDay()][timestamp -1];    //MAY NEED TO FIX (ie t.ex timestamp-1)
+    }
+    else{
+    Serial.println("Error with upploading");
+    }
   }
 
   // Skicka data till Firebase
