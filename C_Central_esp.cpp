@@ -25,7 +25,7 @@ int ESP_ID = -1; // Declare ESP_ID globally
 const int localPort = 12345; // Port för att lyssna på inkommande data
 const int esps = 1;
 const int numSensors = 4; // Antal sensorer
-const int maxMessages = 8; // Antal meddelanden att lagra för medelvärdesberäkning
+const int maxMessages = 2; // Antal meddelanden att lagra för medelvärdesberäkning
 int sensorData[numSensors][maxMessages] = {0}; // Buffert för sensorvärden
 int messageCount = 0;
 int sensorDataDay[7][39]; //Day and in which time interval
@@ -206,5 +206,5 @@ void loop() {
      }
      */
    }
- } /*only one sensor */
+ }
 //}
