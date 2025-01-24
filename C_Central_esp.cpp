@@ -23,9 +23,9 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds); //TID
 
 int ESP_ID = -1; // Declare ESP_ID globally
 const int localPort = 12345; // Port för att lyssna på inkommande data
-const int esps = 2;
-const int numSensors = 8; // Antal sensorer
-const int maxMessages = 6; // Antal meddelanden att lagra för medelvärdesberäkning
+const int esps = 1;
+const int numSensors = 4; // Antal sensorer
+const int maxMessages = 8; // Antal meddelanden att lagra för medelvärdesberäkning
 int sensorData[numSensors][maxMessages] = {0}; // Buffert för sensorvärden
 int messageCount = 0;
 int sensorDataDay[7][39]; //Day and in which time interval
@@ -88,7 +88,7 @@ void updateDataDay(){
     int value = 0;
 
   // Bygg upp en sträng med alla sensorvärden från båda ESP-enheterna
-  for (int esp = 0; esp < (esps - 1); esp++) {
+  for (int esp = 0; esp < (esps); esp++) {
     for (int messageNr = 0; messageNr < maxMessages; messageNr++) {
           value += sensorData[esp][messageNr];
         }
@@ -96,16 +96,16 @@ void updateDataDay(){
 
     value = floor(value / (esps * maxMessages) * 10);
     sensorDataDay[timeClient.getDay()][timestamp] = value;
-    updateFirebase();
+    updateFirebase(timestamp);
 }
 
-void updateFirebase() {
+void updateFirebase(int timestamp2) {
   String firebaseDataString = "";
-  int timestamp = floor((timeClient.getHours() - 11) * 60 + timeClient.getMinutes() / 4); //!ÄNDRA 5MIN TILL ANPASSAT
+ // int timestamp = floor((timeClient.getHours() - 11) * 60 + timeClient.getMinutes() / 4); //!ÄNDRA 5MIN TILL ANPASSAT
 
   if (timeClient.getHours()>14){
   // Bygg upp en sträng med alla sensorvärden från båda ESP-enheterna
-  firebaseDataString += floor((timeClient.getHours()-11) * 60 + timeClient.getMinutes() / 4);
+  firebaseDataString += timeClient.getDay();
 
     for (int cordinate = 0; cordinate < 39; cordinate++) {
     firebaseDataString += sensorDataDay[timeClient.getDay()][cordinate];
@@ -113,8 +113,8 @@ void updateFirebase() {
   
   }
   else{
-    if (timestamp >= 0 && timestamp <=39){
-    firebaseDataString = sensorDataDay[timeClient.getDay()][timestamp -1];    //MAY NEED TO FIX (ie t.ex timestamp-1)
+    if (timestamp2 >= 0 && timestamp2 <=39){
+    firebaseDataString = sensorDataDay[timeClient.getDay()][timestamp2];    //MAY NEED TO FIX (ie t.ex timestamp-1)
     }
     else{
     Serial.println("Error with upploading");
@@ -175,10 +175,10 @@ void loop() {
   extractData(data);
 
    // Uppdatera Firebase var tredje sekund
-   if (millis() - lastFirebaseUpdate >= 8000) { 
-      lastFirebaseUpdate = millis();
+ //  if (millis() - lastFirebaseUpdate >= 8000) { 
+  //    lastFirebaseUpdate = millis();
 
-      updateFirebase();
+  //    updateFirebase();
 /*
      String averageData = String(ESP_ID); // Starta med ESP_ID (den första siffran)
 
@@ -207,4 +207,4 @@ void loop() {
      */
    }
  }
-}
+//}
