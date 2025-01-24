@@ -206,5 +206,5 @@ void loop() {
      }
      */
    }
- }
+ } /*only one sensor */
 //}
