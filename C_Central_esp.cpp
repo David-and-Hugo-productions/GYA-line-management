@@ -84,7 +84,7 @@ void extractData(String data){
       }
 
 void updateDataDay(){
-    int timestamp = floor((timeClient.getHours() - 11) * 60 + timeClient.getMinutes() / 4); //!ÄNDRA 5MIN TILL ANPASSAT
+    int timestamp = (floor((timeClient.getHours() - 11) * 60 + timeClient.getMinutes() / 4)) % 39; //!ÄNDRA 5MIN TILL ANPASSAT
     int value = 0;
 
   // Bygg upp en sträng med alla sensorvärden från båda ESP-enheterna
