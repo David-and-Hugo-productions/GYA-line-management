@@ -105,7 +105,7 @@ void updateFirebase(int timestamp2) {
   String firebaseDataString = "";
  // int timestamp = floor((timeClient.getHours() - 11) * 60 + timeClient.getMinutes() / 4); //!ÄNDRA 5MIN TILL ANPASSAT
 
-  if (timeClient.getHours()>14){
+  if (timeClient.getHours()>14){                                                                                              //!!ÄNDRA 14! DETTA VÄRDE STÅR FÖR ATT NÄR KLOCKAN ÄR EFTER 14 SKA DEN PUSHA UPP DAGSPROGNOSEN!!
   // Bygg upp en sträng med alla sensorvärden från båda ESP-enheterna
   firebaseDataString += timeClient.getDay();
 
