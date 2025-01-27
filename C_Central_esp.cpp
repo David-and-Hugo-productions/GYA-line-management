@@ -74,17 +74,18 @@ void extractData(String data){
           String strData = String(data); // Convert integer to string
           sensorData[ESP_ID][messageCount % maxMessages] = strData.substring(1).toInt(); // Remove the first character (digit)
         }
+          messageCount++;
+
         if (messageCount % maxMessages == 0){
           updateDataDay();
         }
-      messageCount++;
 
       Serial.println("Data från ESP " + String(ESP_ID) + " lagrad.");
 
       }
 
 void updateDataDay(){
-    int timestamp = (floor((timeClient.getHours() - 11) * 60 + timeClient.getMinutes() / 4)) % 39; //!ÄNDRA 5MIN TILL ANPASSAT
+    int timestamp = static_cast<int>((timeClient.getHours() - 11) * 60 + timeClient.getMinutes() / 4) % 39;
     int value = 0;
 
   // Bygg upp en sträng med alla sensorvärden från båda ESP-enheterna
@@ -114,7 +115,7 @@ void updateFirebase(int timestamp2) {
   }
   else{
     if (timestamp2 >= 0 && timestamp2 <=39){
-    firebaseDataString = sensorDataDay[timeClient.getDay()][timestamp2];    //MAY NEED TO FIX (ie t.ex timestamp-1)
+    firebaseDataString = sensorDataDay[timeClient.getDay()][timestamp2];    //MAY NEED TO FIX 
     }
     else{
     Serial.println("Error with upploading");
