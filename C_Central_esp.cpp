@@ -74,11 +74,12 @@ void extractData(String data){
           String strData = String(data); // Convert integer to string
           sensorData[ESP_ID][messageCount % maxMessages] = strData.substring(1).toInt(); // Remove the first character (digit)
         }
-          messageCount++;
 
         if (messageCount % maxMessages == 0){
           updateDataDay();
         }
+
+          messageCount++;
 
       Serial.println("Data från ESP " + String(ESP_ID) + " lagrad.");
 
