@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Radial Gauge with Graph</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+
+        body {
+    background-color: #2C2F33;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    color: #fff;
+    overflow: hidden;
+}
+
+#wrapper {
+    width: 1200px; /* Standardbredd för skalning */
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transform: scale(1); /* Standardvärde som skalas av JS */
+    transform-origin: top center; /* Skalar från toppen och mitten */
+}
+
+#gauge {
+    width: 400px;
+    height: 400px;
+    position: relative;
+    margin-bottom: 20px; /* Utrymme mellan gauge och graf */
+}
+
+#graph-container {
+    position: relative;
+    background: #303236;
+    border-radius: 15px;
+    padding-left: 60px;
+    padding-bottom: 10px;
+    padding-top: 20px;
+}
+
+#graph {
+    width: 640px;
+    height: 360px;
+}
+
+.x-axis {
+    position: absolute;
+    bottom: 10px;
+    left: 110px;
+    display: flex;
+    justify-content: space-between;
+    width: 570px;
+    font-size: 1rem;
+    color: #cdd3e0;
+}
+
+.datum_x-axis {
+    position: absolute;
+    bottom: -30px;
+    left: 0px;
+    display: flex;
+    justify-content: space-between;
+    width: 570px;
+    font-size: 1rem;
+    color: #9fa1a6;
+}
+
+.y-axis {
+    position: absolute;
+    top: 30px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 300px;
+    font-size: 1rem;
+    color: #cdd3e0;
+    text-align: right;
+}
+
+.y-axis span::after {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 1px;
+    background: #cdd3e0;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.value-label {
+    position: absolute;
+    top: 80%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    color: #ffffff;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Anpassningar för landskapsläge */
+@media screen and (orientation: landscape) {
+    #wrapper {
+        flex-direction: row; /* Lägg elementen sida vid sida */
+        justify-content: center;
+        align-items: center;
+        height: 100vh; /* Hela höjden används */
+    }
+
+    #gauge {
+        margin-bottom: 0; /* Ta bort vertikal marginal */
+        margin-right: 20px; /* Utrymme mellan barometer och graf */
+    }
+
+    #graph-container {
+        margin-left: 0; /* Säkerställ korrekt centrering */
+    }
+}
+
+
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <div id="gauge">
+            <div class="value-label">Ingen kö</div>
+        </div>
+        <div id="graph-container">
+            <div id="graph"></div>
+            <div class="x-axis">
+                <span>10:30</span>
+                <span>11:00</span>
+                <span>11:30</span>
+                <span>12:00</span>
+                <span>12:30</span>
+                <span>13:00</span>
+                <span>13:30</span>
+            </div>
+            <div class="datum_x-axis">
+                <span>Prognos från Torsdag 2025 - 01 - 23</span>
+            </div>
+            <div class="y-axis">
+                <span>Full kö</span>
+                <span>Lång kö</span>
+                <span>Mellan kö</span>
+                <span>Lätt kö</span>
+                <span>Kort kö</span>
+            </div>
+        </div>
+    </div>
+    <script>
+        function resizeContent() {
+    const wrapper = document.getElementById('wrapper');
+    const scale = window.innerWidth / 1200; // 1200px är referensbredden
+    wrapper.style.transform = `scale(${scale})`;
+    wrapper.style.transformOrigin = 'top center'; // Skala från toppen och mitten
+}
+
+window.addEventListener('resize', resizeContent);
+resizeContent(); // Kör skalningen när sidan laddas
+
+// Existerande gauge- och grafkod
+const width = 400;
+const height = 400;
+const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+const radius = Math.min(width, height) / 2 - Math.max(...Object.values(margin));
+
+const minValue = 0;
+const maxValue = 100;
+
+let sensorValue = 99;
+const currentValue = -33.16 + (3 * (sensorValue + 1) / 100 * 33.17);
+
+const arcColors = ["#5BE12C", "#F5CD19", "#EA4228", "#FF0000"];
+const strokeColor = "#2C2F33";
+
+const svg = d3.select("#gauge")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+const xScale = d3.scaleLinear()
+    .domain([minValue, maxValue])
+    .range([-Math.PI * 3 / 4, Math.PI * 3 / 4]);
+
+const colorScale = d3.scaleLinear()
+    .domain([minValue, (minValue + maxValue) / 2, maxValue])
+    .range(arcColors);
+
+const arcData = [
+    [minValue, maxValue * 0.22],
+    [maxValue * 0.22, maxValue * 0.44],
+    [maxValue * 0.44, maxValue * 0.66],
+    [maxValue * 0.66, maxValue * 0.88],
+    [maxValue * 0.88, maxValue * 1]
+];
+
+function getActiveArc(value) {
+    return arcData.findIndex(d => value + 33.17 >= d[0] && value + 33.17 <= d[1]);
+}
+
+function updateLabel(value) {
+    let labelText = "Ingen kö";
+    if (value >= maxValue * 0.02 && value < maxValue * 0.22) {
+        labelText = "Kort kö";
+    } else if (value >= maxValue * 0.22 && value < maxValue * 0.44) {
+        labelText = "Lätt kö";
+    } else if (value >= maxValue * 0.44 && value < maxValue * 0.66) {
+        labelText = "Mellan kö";
+    } else if (value >= maxValue * 0.66 && value < maxValue * 0.88) {
+        labelText = "Lång kö";
+    } else if (value >= maxValue * 0.88) {
+        labelText = "Full kö";
+    }
+
+    document.querySelector(".value-label").textContent = labelText;
+}
+
+function updateArcs(value) {
+    const activeArcIndex = getActiveArc(value);
+
+    svg.selectAll("path")
+        .data(arcData)
+        .transition()
+        .duration(900)
+        .attr("d", (d, i) => {
+            const isActive = i === activeArcIndex;
+            return d3.arc()
+                .innerRadius(radius * 0.7)
+                .outerRadius(isActive ? radius * 1.1 : radius)
+                .startAngle(xScale(d[0]))
+                .endAngle(xScale(d[1]))
+                .cornerRadius(isActive ? 15 : 7)();
+        })
+        .attr("fill", (d, i) => colorScale((d[0] + d[1]) / 2))
+        .attr("stroke", strokeColor)
+        .attr("stroke-width", 4);
+
+    updateLabel(value);
+}
+
+function drawNeedle(value) {
+    const needleLength = radius * 0.85;
+    const needleWidth = 7.9;
+    const theta = xScale(value);
+
+    const needleData = [
+        { x: 0, y: -needleWidth * 2.02 },
+        { x: needleLength, y: 0 },
+        { x: 0, y: needleWidth * 2.02 }
+    ];
+
+    const needleLine = d3.line()
+        .x(d => d.x)
+        .y(d => d.y);
+
+    svg.select(".needle").remove();
+
+    svg.append("g")
+        .attr("class", "needle")
+        .attr("transform", `rotate(${theta * 180 / Math.PI})`)
+        .append("path")
+        .attr("d", needleLine(needleData))
+        .attr("fill", "#464A4F");
+
+    svg.append("circle")
+        .attr("cx", 0)
+        .attr("cy", 0)
+        .attr("r", needleWidth * 2)
+        .attr("fill", "#464A4F");
+
+    updateArcs(value);
+}
+
+svg.selectAll("path")
+    .data(arcData)
+    .enter()
+    .append("path")
+    .attr("d", d3.arc()
+        .innerRadius(radius * 0.1)
+        .outerRadius(radius)
+        .startAngle(d => xScale(d[0]))
+        .endAngle(d => xScale(d[1]))
+        .cornerRadius(7))
+    .attr("fill", d => colorScale((d[0] + d[1]) / 2))
+    .attr("stroke", strokeColor)
+    .attr("stroke-width", 30);
+
+drawNeedle(currentValue);
+updateLabel(sensorValue);
+
+
+        // Graph Code
+        const graphWidth = 640;
+        const graphHeight = 360;
+        const graphMargin = { top: 20, right: 30, bottom: 40, left: 50 };
+
+        const graphSvg = d3.select("#graph")
+            .append("svg")
+            .attr("width", graphWidth)
+            .attr("height", graphHeight);
+
+        const graphXScale = d3.scaleLinear()
+            .domain([1, 40])
+            .range([graphMargin.left, graphWidth - graphMargin.right]);
+
+        const graphYScale = d3.scaleLinear()
+            .domain([0, 100])
+            .range([graphHeight - graphMargin.bottom, graphMargin.top]);
+
+        const graphLine = d3.line()
+            .x(d => graphXScale(d.x))
+            .y(d => graphYScale(d.y))
+            .curve(d3.curveMonotoneX);
+
+        function drawGraph(dataString) {
+            const data = [];
+            for (let i = 0; i < 40; i++) {
+                const segment = dataString.slice(i * 4, i * 4 + 4);
+                const x = parseInt(segment.slice(0, 2), 10);
+                const y = parseInt(segment.slice(2), 10);
+                data.push({ x, y });
+            }
+
+            graphSvg.selectAll("path").remove();
+
+            const path = graphSvg.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "steelblue")
+                .attr("stroke-width", 2)
+                .attr("d", graphLine);
+
+            // Get total path length for animation
+            const totalLength = path.node().getTotalLength();
+
+            // Apply the animation
+            path.attr("stroke-dasharray", `${totalLength} ${totalLength}`)
+                .attr("stroke-dashoffset", totalLength)
+                .transition()
+                .duration(900) // Animation duration in milliseconds
+                .ease(d3.easeLinear) // Animation easing
+                .attr("stroke-dashoffset", 0);
+        }
+
+        drawGraph("0100020003000400050306140703086609201076114312501375148815231678174618011975203621912207239524762591266927552883292230923197324833693426350336003700380039034000");
+    </script>
+</body>
+</html>

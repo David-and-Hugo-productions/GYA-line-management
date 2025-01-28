@@ -48,7 +48,7 @@ void setup() {
 
 void loop() {
 
-// Datan som tas emot är "10100" Första siffran är nummret på ESP ( ESP_ID) 
+// Datan som tas emot är ex "10100" Första siffran är nummret på ESP ( ESP_ID) 
 // Femsiffriga numret är "data"
 
  static unsigned long lastFirebaseUpdate = 0;
