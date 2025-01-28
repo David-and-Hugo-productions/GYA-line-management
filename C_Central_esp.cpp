@@ -75,10 +75,6 @@ void extractData(String data){
           sensorData[ESP_ID][messageCount % maxMessages] = strData.substring(1).toInt(); // Remove the first character (digit)
         }
 
-        if (messageCount % maxMessages == 0){
-          updateDataDay();
-        }
-
           messageCount++;
 
       Serial.println("Data från ESP " + String(ESP_ID) + " lagrad.");
@@ -175,6 +171,10 @@ void loop() {
    Serial.println("Data mottagen: " + data);
   
   extractData(data);
+
+          if (timeClient.getSeconds()%4 == 0){
+          updateDataDay();
+        }
 
    // Uppdatera Firebase var tredje sekund
  //  if (millis() - lastFirebaseUpdate >= 8000) { 
