@@ -38,7 +38,7 @@ void extractData(String data){
   int ESP_ID = data.charAt(0) - '0'; // Första siffran är ESP_ID
 
   // Kontrollera att ESP_ID är giltigt (t.ex. inom ett förväntat intervall)
-  if (ESP_ID < 0 || ESP_ID >= esps) {
+  if (ESP_ID < 0 || ESP_ID > esps) {
     Serial.println("Ogiltigt ESP_ID: " + String(ESP_ID));
   }
   else{
@@ -82,7 +82,7 @@ void extractData(String data){
       }
 
 void updateDataDay(){
-    int timestamp = static_cast<int>((timeClient.getHours() - 11) * 60 + timeClient.getMinutes() / 4) % 39;
+    int timestamp = static_cast<int>((timeClient.getHours() - 10) * 60 + timeClient.getMinutes()) / 4 % 39;
     int value = 0;
 
   // Bygg upp en sträng med alla sensorvärden från båda ESP-enheterna
